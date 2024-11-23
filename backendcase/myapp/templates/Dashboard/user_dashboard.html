@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>User Dashboard</title>
+</head>
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-1/4 bg-white shadow-lg flex flex-col justify-between p-6">
+            <!-- Üst Kısım -->
+            <div>
+                <div class="text-center mb-8">
+                    <h2 class="text-xl font-semibold text-gray-700">Hoşgeldiniz</h2>
+                    <p class="text-sm text-gray-500">Dashboard'a Genel Bakış</p>
+                    <h2>Hoş geldin, {{ user_info.username }}!</h2>
+                    <h2>Kalan İzin Süresi: {{ user_info.total_leave_time }}!</h2>
+                </div>
+                <nav>
+                    <ul class="space-y-4">
+                        <li>
+                            <a href="#izinleri-goster" class="flex items-center p-3 rounded-lg text-gray-700 hover:bg-blue-100 hover:text-blue-600 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                İzinleri Göster
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#izin-talep-et" class="flex items-center p-3 rounded-lg text-gray-700 hover:bg-blue-100 hover:text-blue-600 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                                İzin Talep Et
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <!-- Alt Kısım -->
+            <div>
+                <button onclick="user_logout()" class="w-full flex items-center justify-center bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1m0-5v-1" />
+                    </svg>
+                    Çıkış Yap
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-4">User Dashboard</h1>
+                <p class="text-gray-600">Burada izinler ve diğer işlemlerle ilgili detaylara ulaşabilirsiniz.</p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Check if this cookie string begins with the desired name
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+ 
+    function user_logout() {
+        fetch('/user/logout/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'), 
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/user/login/'; 
+            }
+        })
+        .catch(error => console.error('Logout error:', error));
+    }
+ </script>
