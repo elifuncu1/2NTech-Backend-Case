@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Kullanıcı Bilgileri{% endblock %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-screen bg-gray-100">
+    <div class="w-full max-w-6xl bg-white p-8 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Kullanıcı Bilgileri</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">Kullanıcı Adı</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">Email</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">İsim</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">Soyisim</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">Eylemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2 px-4 border-b text-sm text-gray-700">{{ user.username }}</td>
+                        <td class="py-2 px-4 border-b text-sm text-gray-700">{{ user.email }}</td>
+                        <td class="py-2 px-4 border-b text-sm text-gray-700">{{ user.first_name }}</td>
+                        <td class="py-2 px-4 border-b text-sm text-gray-700">{{ user.last_name }}</td>
+                        <td class="py-2 px-4 border-b text-sm text-gray-700">
+                            <a href="{% url 'user_edit' user.id %}" class="text-blue-600 hover:text-blue-800">Düzenle</a> |
+                            <a href="{% url 'user_delete' user.id %}" class="text-red-600 hover:text-red-800">Sil</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-sm text-gray-600">Hiç kullanıcı bulunmamaktadır.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Sayfalama (Opsiyonel) -->
+        <div class="mt-4 flex justify-between items-center">
+            <div>
+                <button id="prev-page" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none" {% if not users.has_previous %} disabled {% endif %}>Önceki</button>
+                <button id="next-page" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none" {% if not users.has_next %} disabled {% endif %}>Sonraki</button>
+            </div>
+            <span class="text-sm text-gray-600">Sayfa {{ users.number }} / {{ users.paginator.num_pages }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="text-xl font-semibold mb-4">Aylık Çalışma Saatleri Raporu</h1>
+
+    <table class="table-auto border-collapse border border-gray-200 w-full mb-4 text-center">
+        <thead>
+            <tr>
+                <th class="px-4 py-2 border-b">Kullanıcı Adı</th>
+                <th class="px-4 py-2 border-b">Toplam Çalışma Saati</th>
+                <th class="px-4 py-2 border-b">Raporu Görüntüle</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for report in users_report %}
+            <tr>
+                <td class="px-4 py-2 border-b">{{ report.username }}</td>
+                <td class="px-4 py-2 border-b">{{ report.total_hours|floatformat:0 }}</td>
+                <td class="px-4 py-2 border-b">
+                    <button 
+                        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600" 
+                        onclick="openReportModal('{{ report.user_id }}')">
+                        Raporu Görüntüle
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center text-center hidden">
+        <div class="bg-white p-6 rounded-lg w-1/2">
+            <h2 id="modalTitle" class="text-xl font-semibold mb-4">Kullanıcı Çalışma Saati Raporu</h2>
+
+            <table class="table-auto border-collapse border border-gray-200 w-full mb-4">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2 border-b">Tarih</th>
+                        <th class="px-4 py-2 border-b">Giriş Zamanı</th>
+                        <th class="px-4 py-2 border-b">Çıkış Zamanı</th>
+                        <th class="px-4 py-2 border-b">Çalışma Saati</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceData">
+                    <!-- Attendance verileri burada yüklenecek -->
+                </tbody>
+            </table>
+
+            <!-- Modal kapama butonu -->
+            <button id="closeReportModal" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                Kapat
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Modal açma ve içerik yükleme
+        function openReportModal(userId) {
+            fetch(`/staff/daily-report/${userId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const report = data.report;
+                    const modalContent = document.getElementById('attendanceData'); // Hedef doğru alan
+
+                    modalContent.innerHTML = ""; // Önceki içerikleri temizle
+
+                    // Her bir rapor için tabloyu doldur
+                    report.forEach(item => {
+                        const row = document.createElement('tr');
+                        const dateCell = document.createElement('td');
+                        const entryTimeCell = document.createElement('td');
+                        const exitTimeCell = document.createElement('td');
+                        const hoursCell = document.createElement('td');
+
+                        dateCell.textContent = item.date;
+                        entryTimeCell.textContent = item.entry_time; // Giriş zamanı
+                        exitTimeCell.textContent = item.exit_time; // Çıkış zamanı
+                        hoursCell.textContent = Math.round(item.worked_hours);
+
+                        row.appendChild(dateCell);
+                        row.appendChild(entryTimeCell);
+                        row.appendChild(exitTimeCell);
+                        row.appendChild(hoursCell);
+                        modalContent.appendChild(row);
+                    });
+
+                    document.getElementById('reportModal').classList.remove('hidden'); // Modalı göster
+                })
+                .catch(error => {
+                    console.error('Rapor alınırken bir hata oluştu:', error);
+                });
+        }
+
+        // Modal kapama
+        document.getElementById('closeReportModal').addEventListener('click', function() {
+            document.getElementById('reportModal').classList.add('hidden');
+        });
+    </script>
+{% endblock %}

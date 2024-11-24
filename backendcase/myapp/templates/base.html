@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Paneli{% endblock %}</title>
+
+    <!-- TailwindCSS CDN Link -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- DataTable CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+</head>
+
+<body class="bg-gray-100 font-sans flex">
+    <!-- Sidebar -->
+    <div class="w-1/4 bg-gray-800 text-white h-screen p-4">
+        <h2 class="text-2xl font-bold mb-6 text-center">Admin Paneli</h2>
+        <ul>
+            <li class="mb-4">
+                <a href="/staff/dashboard/" class="text-lg hover:text-gray-400">Personel Giriş Saatleri</a>
+            </li>
+            <li class="mb-4">
+                <a href="/staff/userInformations" class="text-lg hover:text-gray-400">Personel Bilgileri</a>
+            </li>
+            <li class="mb-4">
+                <a href="/staff/addUser/" class="text-lg hover:text-gray-400">Personel Ekle</a>
+            </li>
+            <li class="mb-4">
+                <a href="/staff/leaveRequests/" class="text-lg hover:text-gray-400">Personel İzin Talepleri</a>
+            </li>
+            <li class="mb-4"></li>
+                <a href="/staff/monthly_report/" class="text-lg hover:text-gray-400">Personel Raporları</a>
+            </li>
+        </ul>
+        <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+            <a href="#" class="text-lg hover:text-gray-400">Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="w-3/4 p-6">
+        {% block content %}  <!-- İçerik burada dinamik olarak değişecek -->
+        {% endblock %}
+    </div>
+</body>
+
+</html>

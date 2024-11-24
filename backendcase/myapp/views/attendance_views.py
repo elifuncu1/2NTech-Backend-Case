@@ -34,3 +34,5 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Checked out', 'check_out_time': attendance.check_out_time})
         except Attendance.DoesNotExist:
             return Response({'status': 'No check-in record found for today'}, status=400)
+        
+ 

@@ -30,6 +30,7 @@ ALLOWED_HOSTS = []
 AUTH_USER_MODEL = 'auth.User'
 
 INSTALLED_APPS = [
+    "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,7 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'myapp',
-    'drf_yasg'
+    'drf_yasg',
+    'channels',
+    
 ]
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,  
@@ -54,6 +57,21 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+ASGI_APPLICATION = 'backendcase.asgi.application'
+CELERY_BROKER_URL = 'myredis://myredis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('myredis', 6379)],  
+        },
+    },
+}
+
+
+
 
 ROOT_URLCONF = 'backendcase.urls'
 
@@ -81,12 +99,12 @@ WSGI_APPLICATION = 'backendcase.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydatabase',  
-        'USER': 'admin',     
-        'PASSWORD': 'qweasd123', 
-        'HOST': 'localhost',  
-        'PORT': '5432',                
+        'ENGINE': 'django.db.backends.postgresql', 
+        'NAME': 'backend_db', 
+        'USER': 'user', 
+        'PASSWORD': 'asdqwe123', 
+        'HOST': 'my_postgres',  
+        'PORT': '5432', 
     }
 }
 
@@ -115,7 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Istanbul'
 
 USE_I18N = True
 

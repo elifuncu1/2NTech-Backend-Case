@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Personel Geç Kalma Tabloları{% endblock %}
+
+{% block content %}
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-bold text-center mb-6">Personel Giriş Saatleri</h2>
+
+        <!-- DataTable Tablosu -->
+        <table id="attendance-table" class="display w-full table-auto border-collapse border border-gray-300">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 border">Kullanıcı</th>
+                    <th class="px-4 py-2 border">Giriş Zamanı</th>
+                    <th class="px-4 py-2 border">Geç Kalma (Dakika)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Veriler AJAX ile yüklenecek -->
+            </tbody>
+        </table>
+    </div>
+    <!-- jQuery ve DataTable JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+
+    // DataTable'ı başlat
+    const table = $('#attendance-table').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": function(data, callback, settings) {
+            const pageNumber = currentPage;
+
+            $.ajax({
+                url: "{% url 'attendance-data' %}?page=" + pageNumber,  // Backend URL
+                type: "GET",
+                success: function(response) {
+                    totalPages = response.total_pages;  // Toplam sayfa sayısını al
+                    const data = response.data;
+                    callback({
+                        draw: settings.iDraw,
+                        recordsTotal: data.length,
+                        recordsFiltered: data.length,
+                        data: data
+                    });
+
+                    // Sayfalama bilgilerini güncelle
+                    updatePagination(response);
+                }
+            });
+        },
+        "columns": [
+            { "data": "user__username", "title": "Kullanıcı Adı" },
+            { "data": "entry_time", "title": "Giriş Zamanı" },
+            { "data": "expected_time", "title": "Geç Kalma (Dakika)" }
+        ]
+    });
+
+    // Sayfalama bilgilerini güncelle
+    function updatePagination(response) {
+        $('#page-info').text(`Sayfa ${response.current_page} / ${response.total_pages}`);
+        $('#prev-page').prop('disabled', response.current_page === 1);
+        $('#next-page').prop('disabled', response.current_page === response.total_pages);
+    }
+
+    // Önceki sayfa butonu
+    $('#prev-page').click(function() {
+        if (currentPage > 1) {
+            currentPage--;
+            table.ajax.reload();
+        }
+    });
+
+    // Sonraki sayfa butonu
+    $('#next-page').click(function() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            table.ajax.reload();
+        }
+    });
+
+    // WebSocket bağlantısını başlat
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws/notifications/');
+
+    socket.onopen = function (e) {
+        console.log("WebSocket bağlantısı başarılı");
+    };
+
+    socket.onmessage = function (event) {
+        console.log("Mesaj alındı: ", event.data);
+
+        const data = JSON.parse(event.data);
+        const message = data.message;
+
+        console.log("Mesaj: ", message);
+
+        // Tarayıcı bildirimini göster
+        if (Notification.permission === "granted") {
+            new Notification("Yeni Bildirim", {
+                body: message,
+            });
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    new Notification("Yeni Bildirim", {
+                        body: message,
+                    });
+                }
+            });
+        }
+    };
+
+    socket.onclose = function (event) {
+        console.log("WebSocket bağlantısı kapandı");
+    };
+</script>
+{% endblock %}
+
+

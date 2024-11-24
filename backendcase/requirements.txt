@@ -1,1 +1,8 @@
-drf-yasg
+Django>=5.1.3
+channels
+channels_redis
+redis
+djangorestframework
+drf_yasg
+psycopg2-binary
+celery
