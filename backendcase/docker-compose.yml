@@ -26,11 +26,11 @@ services:
     image: postgres:latest
     container_name: mypostgres
     environment:
-      POSTGRES_DB: backend_db    # Veritabanı adı
-      POSTGRES_USER: user        # Kullanıcı adı
-      POSTGRES_PASSWORD: asdqwe123 # Şifre
+      POSTGRES_DB: backend_db   
+      POSTGRES_USER: user   
+      POSTGRES_PASSWORD: asdqwe123 
     ports:
-      - "5432:5432"             # PostgreSQL portu
+      - "5432:5432"        
     networks:
       - backend
 

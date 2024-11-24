@@ -82,7 +82,7 @@ http://localhost:8000
 Admin paneline erişmek için şu URL'yi kullanın:
 
 ```
-http://localhost:8000/admin
+http://localhost:8000/staff/login
 ```
 
 ### 7. Servisleri Durdurma

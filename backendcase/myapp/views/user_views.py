@@ -22,23 +22,19 @@ def user_login(request):
         if user is not None and not user.is_superuser:
             login(request, user)
 
-            # Şu anki zamanı al (time-zone aware)
             now_tz = timezone.now()
             tz = pytz.timezone('Europe/Istanbul')
 
-            # Giriş-çıkış saatleri
             start_time = tz.localize(datetime.combine(now_tz.date(), time(hour=8, minute=0)))
             end_time = tz.localize(datetime.combine(now_tz.date(), time(hour=18, minute=0)))
+            if now_tz.weekday() in [5, 6]:  
+                messages.success(request, 'Hafta sonu giriş başarılı. Log tutulmadı.')
+                return redirect('user_dashboard')
 
-            # Attendance kaydı (günün ilk girişi kontrolü)
             attendance_today = Attendance.objects.filter(user=user, entry_time__date=now_tz.date()).first()
 
-            if not attendance_today:  # İlk giriş
-                if now_tz > end_time:
-                    messages.error(request, 'Çalışma saatleri dışında giriş yapılamaz!')
-                    return redirect('user_login')
-
-                if now_tz > start_time:  # Geç kalma durumu
+            if not attendance_today:
+                if start_time < now_tz < end_time:
                     late_minutes = (now_tz - start_time).seconds // 60
 
                     try:
@@ -56,19 +52,16 @@ def user_login(request):
                     except UserPermission.DoesNotExist:
                         messages.error(request, 'İzin bilgileriniz bulunamadı. Lütfen yöneticinize başvurun.')
 
-                    # Yetkiliye bildirim gönderme
                     send_late_notification(user_id=user.id, late_minutes=late_minutes)
 
-                    # İzin azalma bildirimi
-                    if user_permission.total_leave_minutes < 4320:  # 4320 dakika = 3 gün
+                    if user_permission.total_leave_minutes < 4320: 
                         send_leave_notification(user_id=user.id)
                         messages.warning(request, 'Yıllık izniniz 3 günden az kaldı!')
 
-                else:  # Zamanında giriş
+                else: 
                     late_minutes = 0
                     messages.success(request, 'Giriş zamanında yapılmıştır.')
 
-                # Attendance kaydı oluştur
                 Attendance.objects.create(
                     user=user,
                     expected_time=late_minutes,
@@ -107,6 +100,13 @@ def user_dashboard(request):
 
     return render(request, 'User/user_dashboard.html', {'user_info': user_info})
 
+@login_required
+def wants_to_leave(request):
+    return render(request, 'User/user_wants_to_leave.html')
+
+@login_required
+def my_leave_requests(request):
+    return render(request, 'User/user_my_leave_requests.html')
 
 @login_required
 def user_logout(request):
@@ -116,11 +116,10 @@ def user_logout(request):
 
     if request.method == "POST":
         if not attendance_today:
-            # expected_time için bir değer ekliyoruz. Örneğin, giriş zamanına göre bir tahmini saat belirleyebiliriz.
-            Attendance.objects.create(user=user, entry_time=now, expected_time=0)  # expected_time'ı da ekledik
+            Attendance.objects.create(user=user, entry_time=now, expected_time=0)  
         else:
             attendance_today.exit_time = now
             attendance_today.save()
 
     logout(request)
-    return redirect('user_login')  # login sayfasına yönlendirme
+    return redirect('user_login') 

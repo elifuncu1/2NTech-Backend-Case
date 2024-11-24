@@ -6,3 +6,4 @@ djangorestframework
 drf_yasg
 psycopg2-binary
 celery
+daphne
