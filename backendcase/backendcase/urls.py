@@ -10,7 +10,7 @@ schema_view = get_schema_view(
         default_version="v1",
         description="Personel giriş/çıkış saatleri, izin talepleri ve raporlama için API.",
         terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="developer@example.com"),
+        contact=openapi.Contact(email="elifrumeysauncu@gmail.com"),
         license=openapi.License(name="MIT License"),
     ),
     public=True,
