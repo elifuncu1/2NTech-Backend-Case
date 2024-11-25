@@ -5,7 +5,8 @@
 {% block content %}
 <div class="bg-white rounded-xl shadow-md p-6">
     <h1 class="text-2xl font-bold text-gray-800 mb-4">İzin Talep Formu</h1>
-    <form action="#" method="POST" class="space-y-4">
+    <form method="post" action="{% url 'leave_request' %}" class="space-y-4">
+        {% csrf_token %}
         <div>
             <label for="leave_type" class="block text-sm font-medium text-gray-700">İzin Türü</label>
             <select id="leave_type" name="leave_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
@@ -23,8 +24,8 @@
             <input type="date" id="end_date" name="end_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
         </div>
         <div>
-            <label for="description" class="block text-sm font-medium text-gray-700">Açıklama</label>
-            <textarea id="description" name="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="İzin talebinizin sebebini belirtiniz..."></textarea>
+            <label for="reason" class="block text-sm font-medium text-gray-700">Açıklama</label>
+            <textarea id="reason" name="reason" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="İzin talebinizin sebebini belirtiniz..."></textarea>
         </div>
         <div>
             <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none">

@@ -87,6 +87,10 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries':{
+                'my_templatetag': 'myapp.templatetags.custom_tags',
+                'my_templatetag': 'myapp.templatetags.custom_filters',
+            }
         },
     },
 ]
@@ -131,7 +135,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'tr'
 
 TIME_ZONE = 'Europe/Istanbul'
 

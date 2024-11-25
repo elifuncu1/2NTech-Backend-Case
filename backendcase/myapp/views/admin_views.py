@@ -8,11 +8,14 @@ from django.utils.timezone import localtime
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render
-from myapp.Forms import UserForm 
+from myapp.serializers import UserForm 
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
+from myapp.decorator import admin_required
+from myapp.models import LeaveRequest
+from myapp.models import UserPermission
 def admin_login(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -26,14 +29,18 @@ def admin_login(request):
     return render(request, 'Admin/admin_login.html')
 
 @login_required
+@admin_required()
 def staff_dashboard(request):
     return render(request, 'Admin/admin_dashboard.html')
 
+
 @login_required
+@admin_required()
 def staff_addUser(request):
     return render(request, 'Admin/admin_add_user.html')
 
 @login_required
+@admin_required()
 def get_attendance_data(request):
     # Sayfa numarası parametresi alıyoruz
     page_number = request.GET.get('page', 1)  # Varsayılan olarak 1. sayfa
@@ -61,6 +68,7 @@ def get_attendance_data(request):
     })
 
 @login_required
+@admin_required()
 def user_informations(request):
     # is_superuser=False olan kullanıcıları al
     users_list = User.objects.filter(is_superuser=False)
@@ -76,6 +84,8 @@ def user_informations(request):
     }
     return render(request, 'Admin/admin_user_informations.html', context)
 
+@login_required
+@admin_required()
 def add_user(request):
     if request.method == 'POST':
         # Formdan gelen verileri al
@@ -110,6 +120,7 @@ def add_user(request):
             return JsonResponse({'success': False, 'message': 'Lütfen tüm alanları doldurun.'})
 
 @login_required
+@admin_required()
 def user_edit(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
@@ -125,6 +136,7 @@ def user_edit(request, user_id):
     return render(request, 'Admin/admin_user_edit.html', {'form': form, 'user': user})
 
 @login_required
+@admin_required()
 def user_delete(request, user_id):
     user = get_object_or_404(User, id=user_id)
     user.delete()
@@ -132,6 +144,7 @@ def user_delete(request, user_id):
     return redirect('user_informations')
 
 @login_required
+@admin_required()
 def monthly_report(request):
     now = datetime.now()
     start_date = now.replace(day=1)  # Ayın başı
@@ -165,6 +178,7 @@ def monthly_report(request):
 
 @csrf_exempt
 @login_required
+@admin_required()
 def get_daily_report(request, user_id):
     # Verilen user_id'ye ait kullanıcıyı bulalım
     now = datetime.now()
@@ -189,3 +203,69 @@ def get_daily_report(request, user_id):
         })
 
     return JsonResponse({'report': report})
+
+@admin_required()
+def staff_leave_requests(request):
+    leave_requests = LeaveRequest.objects.select_related('user').all()  
+    user_leave_data = {}
+
+    for leave_request in leave_requests:
+        user = leave_request.user
+        if user.id not in user_leave_data:
+            try:
+                user_permission = UserPermission.objects.get(user=user)
+                total_minutes = user_permission.total_leave_minutes  
+                days = total_minutes // 1440
+                hours = (total_minutes % 1440) // 60 
+                minutes = total_minutes % 60
+                user_leave_data[user.id] = f"{days} gün, {hours} saat, {minutes} dakika"
+            except UserPermission.DoesNotExist:
+                user_leave_data[user.id] = "0 gün, 0 saat, 0 dakika"
+
+    return render(request, 'Admin/admin_user_leave_requests.html', {
+        'leave_requests': leave_requests,
+        'user_leave_data': user_leave_data
+    })
+
+@admin_required()
+def staff_leave_action(request, request_id):
+    leave_request = get_object_or_404(LeaveRequest, id=request_id)
+
+    if request.method == "POST":
+        action = request.POST.get('action')
+
+        # Eğer izin onaylandıysa
+        if action == "approve":
+            leave_request.status = "onaylandı"
+            try:
+                user_permission = UserPermission.objects.get(user=leave_request.user)
+                leave_duration = leave_request.end_date - leave_request.start_date
+                leave_duration_minutes = leave_duration.total_seconds() // 60 
+
+                if user_permission.total_leave_minutes >= leave_duration_minutes:
+                    user_permission.total_leave_minutes -= leave_duration_minutes
+                    user_permission.save()
+                    messages.success(request, "İzin talebi onaylandı ve kullanıcı izin süresi güncellendi.")
+                else:
+                    leave_request.status = "beklemede"
+                    messages.error(request, "Kullanıcının yeterli izin süresi yok.")
+                
+            except UserPermission.DoesNotExist:
+                messages.error(request, "Kullanıcı izin bilgisi bulunamadı.")
+                leave_request.status = "beklemede"  # Durumu tekrar beklemeye al
+
+        elif action == "reject":
+            leave_request.status = "reddedildi"
+            messages.warning(request, "İzin talebi reddedildi.")
+        else:
+            messages.error(request, "Geçersiz işlem.")
+        
+        # İzin talebini kaydet
+        leave_request.save()
+        return redirect('staff_leaveRequests')
+
+@login_required
+@admin_required()
+def staff_logout(request):
+    logout(request)
+    return redirect('admin_login') 

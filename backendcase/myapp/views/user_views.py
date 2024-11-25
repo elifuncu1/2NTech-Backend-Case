@@ -12,7 +12,10 @@ from django.utils.timezone import make_aware
 from myapp.models.attendanceModel import Attendance 
 from myapp.task import send_late_notification, send_leave_notification
 import pytz
-
+from myapp.serializers import LeaveRequestForm
+from myapp.models import LeaveRequest
+from myapp.decorator import user_required
+from django.utils.timezone import localtime
 def user_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -81,6 +84,7 @@ def user_login(request):
 
     
 @login_required
+@user_required()
 def user_dashboard(request):
     user_info = {
         'username': request.user.username,
@@ -94,32 +98,77 @@ def user_dashboard(request):
         hours = (total_minutes % 1440) // 60 
         minutes = total_minutes % 60
         user_info['total_leave_time'] = f"{days} gün, {hours} saat, {minutes} dakika"
-        print(user_info['total_leave_time'])
     except UserPermission.DoesNotExist:
         user_info['total_leave_time'] = "0 gün, 0 saat, 0 dakika"
-
-    return render(request, 'User/user_dashboard.html', {'user_info': user_info})
+    attendance_data = Attendance.objects.filter(user=request.user).order_by('-entry_time')
+    return render(request, 'User/user_dashboard.html', {'user_info': user_info,'attendance_data': attendance_data})
 
 @login_required
+@user_required()
 def wants_to_leave(request):
-    return render(request, 'User/user_wants_to_leave.html')
+    user_info = {
+        'username': request.user.username,
+        'email': request.user.email,
+    }
+    
+    try:
+        user_permission = UserPermission.objects.get(user=request.user)
+        total_minutes = user_permission.total_leave_minutes  
+        days = total_minutes // 1440
+        hours = (total_minutes % 1440) // 60 
+        minutes = total_minutes % 60
+        user_info['total_leave_time'] = f"{days} gün, {hours} saat, {minutes} dakika"
+    except UserPermission.DoesNotExist:
+        user_info['total_leave_time'] = "0 gün, 0 saat, 0 dakika"
+    return render(request, 'User/user_wants_to_leave.html',{'user_info': user_info})
 
 @login_required
+@user_required()
 def my_leave_requests(request):
-    return render(request, 'User/user_my_leave_requests.html')
+    user_info = {
+        'username': request.user.username,
+        'email': request.user.email,
+    }
+    
+    try:
+        user_permission = UserPermission.objects.get(user=request.user)
+        total_minutes = user_permission.total_leave_minutes  
+        days = total_minutes // 1440
+        hours = (total_minutes % 1440) // 60 
+        minutes = total_minutes % 60
+        user_info['total_leave_time'] = f"{days} gün, {hours} saat, {minutes} dakika"
+    except UserPermission.DoesNotExist:
+        user_info['total_leave_time'] = "0 gün, 0 saat, 0 dakika"
+    user = request.user
+    leave_requests = LeaveRequest.objects.filter(user=user).order_by('-request_date')  
+    return render(request, 'User/user_my_leave_requests.html', {'leave_requests': leave_requests,'user_info': user_info})
 
 @login_required
+@user_required()
 def user_logout(request):
-    now = datetime.now()
     user = request.user
-    attendance_today = Attendance.objects.filter(user=user, entry_time__date=now.date()).first()
-
-    if request.method == "POST":
-        if not attendance_today:
-            Attendance.objects.create(user=user, entry_time=now, expected_time=0)  
-        else:
-            attendance_today.exit_time = now
-            attendance_today.save()
+    now_tz = timezone.now()
+    attendance_today = Attendance.objects.filter(user=user, entry_time__date=now_tz.date()).first()
+    attendance_today.exit_time = now_tz
+    attendance_today.save()
 
     logout(request)
     return redirect('user_login') 
+
+@login_required
+@user_required()
+def leave_request_post_view(request):
+    if request.method == "POST":
+        form = LeaveRequestForm(request.POST)
+        if form.is_valid():
+            leave_request = form.save(commit=False)
+            leave_request.user = request.user
+            leave_request.save()
+            messages.success(request, "İzin talebiniz başarıyla oluşturuldu.")
+            return redirect('/user/my_leave_requests') 
+        else:
+            messages.error(request, "İzin talebiniz oluşturulurken bir hata oluştu. Lütfen formu kontrol edin.")
+    else:
+        form = LeaveRequestForm()
+    
+    return render(request, 'User/my_leave_requests.html', {'form': form})

@@ -8,34 +8,90 @@
 
     <!-- TailwindCSS CDN Link -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>const socket = new WebSocket('ws://127.0.0.1:8000/ws/notifications/');
 
+        socket.onopen = function (e) {
+            console.log("WebSocket bağlantısı başarılı");
+        };
+    
+        socket.onmessage = function (event) {
+            console.log("Mesaj alındı: ", event.data);
+    
+            const data = JSON.parse(event.data);
+            const message = data.message;
+    
+            console.log("Mesaj: ", message);
+    
+            // Tarayıcı bildirimini göster
+            if (Notification.permission === "granted") {
+                new Notification("Yeni Bildirim", {
+                    body: message,
+                });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification("Yeni Bildirim", {
+                            body: message,
+                        });
+                    }
+                });
+            }
+        };
+    
+        socket.onclose = function (event) {
+            console.log("WebSocket bağlantısı kapandı");
+        };
+        function user_logout() {
+            fetch('/staff/logout/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'), 
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                window.location.href = '/staff/login'; 
+            })
+            .catch(error => console.error('Logout error:', error));
+        }
+        </script>
     <!-- DataTable CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
 </head>
 
 <body class="bg-gray-100 font-sans flex">
     <!-- Sidebar -->
-    <div class="w-1/4 bg-gray-800 text-white h-screen p-4">
-        <h2 class="text-2xl font-bold mb-6 text-center">Admin Paneli</h2>
-        <ul>
-            <li class="mb-4">
-                <a href="/staff/dashboard/" class="text-lg hover:text-gray-400">Personel Giriş Saatleri</a>
-            </li>
-            <li class="mb-4">
-                <a href="/staff/userInformations" class="text-lg hover:text-gray-400">Personel Bilgileri</a>
-            </li>
-            <li class="mb-4">
-                <a href="/staff/addUser/" class="text-lg hover:text-gray-400">Personel Ekle</a>
-            </li>
-            <li class="mb-4">
-                <a href="/staff/leaveRequests/" class="text-lg hover:text-gray-400">Personel İzin Talepleri</a>
-            </li>
-            <li class="mb-4"></li>
+    <div class="w-1/4 bg-gray-800 text-white h-screen p-4 flex flex-col justify-between">
+        <div>
+            <h2 class="text-2xl font-bold mb-6 text-center">Admin Paneli</h2>
+            <ul>
+                <li class="mb-4">
+                    <a href="/staff/dashboard/" class="text-lg hover:text-gray-400">Personel Giriş Saatleri</a>
+                </li>
+                <li class="mb-4">
+                    <a href="/staff/userInformations" class="text-lg hover:text-gray-400">Personel Bilgileri</a>
+                </li>
+                <li class="mb-4">
+                    <a href="/staff/addUser/" class="text-lg hover:text-gray-400">Personel Ekle</a>
+                </li>
+                <li class="mb-4">
+                    <a href="/staff/leaveRequests/" class="text-lg hover:text-gray-400">Personel İzin Talepleri</a>
+                </li>
+                <li class="mb-4"></li>
                 <a href="/staff/monthly_report/" class="text-lg hover:text-gray-400">Personel Raporları</a>
-            </li>
-        </ul>
-        <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-            <a href="#" class="text-lg hover:text-gray-400">Logout</a>
+            </ul>
+        </div>
+
+        <div class="mt-auto"> <!-- Bu satır ile butonu alt kısma itiyoruz -->
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="w-full flex items-center justify-center bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1m0-5v-1" />
+                    </svg>
+                    Çıkış Yap
+                </button>
+            </form>
         </div>
     </div>
 
@@ -45,5 +101,6 @@
         {% endblock %}
     </div>
 </body>
+
 
 </html>

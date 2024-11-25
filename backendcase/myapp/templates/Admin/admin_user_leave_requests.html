@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Personel İzin Talepleri{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-md p-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Personel İzin Talepleri</h1>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider border-b">Personel</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider border-b">Kalan İzin Süresi</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider border-b">İzin Türü</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider border-b">Başlangıç Tarihi</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider border-b">Bitiş Tarihi</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider border-b">Açıklama</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider border-b">Durum</th>
+                    <th class="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider border-b">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in leave_requests %}
+                <tr>
+                    <td class="px-6 py-4 text-sm text-gray-700 border-b">{{ request.user.username }}</td>
+                    {% load custom_tags %}
+                    <td class="px-6 py-4 text-sm text-gray-700 border-b">
+                        {{ user_leave_data|default:''|dict_get:request.user.id }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-700 border-b">
+                        {% if request.leave_type == 'annual' %} Yıllık İzin
+                        {% elif request.leave_type == 'sick' %} Hastalık İzni
+                        {% else %} Kişisel İzin {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-700 border-b">{{ request.start_date }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700 border-b">{{ request.end_date }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700 border-b">{{ request.reason }}</td>
+                    <td class="px-6 py-4 text-sm border-b">
+                        {% if request.status == 'onaylandı' %}
+                            <span class="inline-block px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">Onaylandı</span>
+                        {% elif request.status == 'reddedildi' %}
+                            <span class="inline-block px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">Reddedildi</span>
+                        {% else %}
+                            <span class="inline-block px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">Beklemede</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-center text-sm border-b">
+                        {% if request.status == 'beklemede' %}
+                        <form method="post" action="{% url 'staff_leave_action' request.id %}" class="inline-block">
+                            {% csrf_token %}
+                            <button type="submit" name="action" value="approve" class="bg-green-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-green-600">
+                                Onayla
+                            </button>
+                            <button type="submit" name="action" value="reject" class="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 ml-2">
+                                Reddet
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                        Henüz bir izin talebi bulunmamaktadır.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

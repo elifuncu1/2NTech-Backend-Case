@@ -84,39 +84,7 @@
     });
 
     // WebSocket bağlantısını başlat
-    const socket = new WebSocket('ws://127.0.0.1:8000/ws/notifications/');
-
-    socket.onopen = function (e) {
-        console.log("WebSocket bağlantısı başarılı");
-    };
-
-    socket.onmessage = function (event) {
-        console.log("Mesaj alındı: ", event.data);
-
-        const data = JSON.parse(event.data);
-        const message = data.message;
-
-        console.log("Mesaj: ", message);
-
-        // Tarayıcı bildirimini göster
-        if (Notification.permission === "granted") {
-            new Notification("Yeni Bildirim", {
-                body: message,
-            });
-        } else if (Notification.permission !== "denied") {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    new Notification("Yeni Bildirim", {
-                        body: message,
-                    });
-                }
-            });
-        }
-    };
-
-    socket.onclose = function (event) {
-        console.log("WebSocket bağlantısı kapandı");
-    };
+    
 </script>
 {% endblock %}
 
